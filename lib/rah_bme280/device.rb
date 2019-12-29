@@ -61,6 +61,17 @@ module RahBme280
       read_calibration
     end
 
+    def status
+      raw = read_raw
+      temp, t_fine = compensate_T(raw[:temp_raw])
+
+      {
+        temperature: temp,
+        pressure: compensate_P(raw[:pressure_raw], t_fine),
+        humidity: compensate_H(raw[:hum_raw], t_fine)
+      }
+    end
+
     def i2c_get(param, length = 1)
       @driver.i2c_get(@address, param, length)
     end
@@ -117,17 +128,6 @@ module RahBme280
       @dig_H4 = e4 << 4 | e5 & 0x0F
       @dig_H5 = e6 << 4 | e5 >> 4
       nil
-    end
-
-    def calc_sensor_data
-      raw = read_raw
-      temp, t_fine = compensate_T(raw[:temp_raw])
-
-      {
-        temperature: temp,
-        pressure: compensate_P(raw[:pressure_raw], t_fine),
-        humidity: compensate_H(raw[:hum_raw], t_fine)
-      }
     end
 
     def read_raw
